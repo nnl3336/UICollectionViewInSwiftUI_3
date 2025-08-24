@@ -9,8 +9,8 @@ import SwiftUI
 import UIKit
 
 struct CollectionViewRepresentable: UIViewRepresentable {
-    // UICollectionView に渡したいデータ
     var items: [String]
+    @Binding var selectedItems: [String]  // ← SwiftUI 側に反映
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -19,8 +19,6 @@ struct CollectionViewRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> UICollectionView {
         let layout = UICollectionViewFlowLayout()
         layout.itemSize = CGSize(width: 100, height: 100)
-        layout.scrollDirection = .vertical
-
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.dataSource = context.coordinator
         collectionView.delegate = context.coordinator
@@ -33,7 +31,6 @@ struct CollectionViewRepresentable: UIViewRepresentable {
         uiView.reloadData()
     }
 
-    // Coordinator クラスで UICollectionViewDataSource, UICollectionViewDelegate を実装
     class Coordinator: NSObject, UICollectionViewDataSource, UICollectionViewDelegate {
         var parent: CollectionViewRepresentable
 
@@ -47,9 +44,8 @@ struct CollectionViewRepresentable: UIViewRepresentable {
 
         func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
-            cell.backgroundColor = .blue
+            cell.backgroundColor = parent.selectedItems.contains(parent.items[indexPath.item]) ? .green : .blue
 
-            // UILabel を追加して文字を表示する場合
             let tag = 100
             let label: UILabel
             if let existingLabel = cell.viewWithTag(tag) as? UILabel {
@@ -66,7 +62,13 @@ struct CollectionViewRepresentable: UIViewRepresentable {
         }
 
         func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-            print("Tapped item at \(indexPath.item)")
+            let item = parent.items[indexPath.item]
+            if let index = parent.selectedItems.firstIndex(of: item) {
+                parent.selectedItems.remove(at: index)
+            } else {
+                parent.selectedItems.append(item)
+            }
+            collectionView.reloadItems(at: [indexPath])
         }
     }
 }

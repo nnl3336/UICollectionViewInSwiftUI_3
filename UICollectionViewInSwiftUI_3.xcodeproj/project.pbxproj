@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		187071392E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 187071372E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodeld */; };
 		1870713B2E5ACBB100098142 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1870713A2E5ACBB100098142 /* ContentView.swift */; };
 		187071662E5ACBF400098142 /* CollectionViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 187071652E5ACBF400098142 /* CollectionViewRepresentable.swift */; };
 /* End PBXBuildFile section */
@@ -30,6 +31,7 @@
 
 /* Begin PBXFileReference section */
 		187071302E5ACBB100098142 /* UICollectionViewInSwiftUI_3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UICollectionViewInSwiftUI_3.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		187071382E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = UICollectionViewInSwiftUI_3.xcdatamodel; sourceTree = "<group>"; };
 		1870713A2E5ACBB100098142 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		187071462E5ACBB300098142 /* UICollectionViewInSwiftUI_3Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UICollectionViewInSwiftUI_3Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		187071502E5ACBB300098142 /* UICollectionViewInSwiftUI_3UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UICollectionViewInSwiftUI_3UITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,6 +89,7 @@
 				187071532E5ACBB300098142 /* UICollectionViewInSwiftUI_3UITests */,
 				1870713A2E5ACBB100098142 /* ContentView.swift */,
 				187071652E5ACBF400098142 /* CollectionViewRepresentable.swift */,
+				187071372E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodeld */,
 				187071312E5ACBB100098142 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -246,6 +249,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				187071662E5ACBF400098142 /* CollectionViewRepresentable.swift in Sources */,
+				187071392E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodeld in Sources */,
 				1870713B2E5ACBB100098142 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -602,6 +606,19 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		187071372E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				187071382E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodel */,
+			);
+			currentVersion = 187071382E5ACBB100098142 /* UICollectionViewInSwiftUI_3.xcdatamodel */;
+			path = UICollectionViewInSwiftUI_3.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = 187071282E5ACBB100098142 /* Project object */;
 }
