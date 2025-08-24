@@ -1,74 +1,168 @@
 //
-//  CollectionViewRepresentable.swift
-//  UICollectionViewInSwiftUI_3
+//  ContentView.swift
+//  UICollectionViewInSwiftUI_2
 //
-//  Created by Yuki Sasaki on 2025/08/24.
+//  Created by Yuki Sasaki on 2025/08/23.
 //
 
-import SwiftUI
 import UIKit
+import PhotosUI
+import SwiftUI
+import CoreData
 
-struct CollectionViewRepresentable: UIViewRepresentable {
-    var items: [String]
-    @Binding var selectedItems: [String]  // ← SwiftUI 側に反映
+class PhotoFRCController: NSObject, ObservableObject, NSFetchedResultsControllerDelegate {
+    private let frc: NSFetchedResultsController<Photo>
+    private weak var collectionView: UICollectionView?
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+    init(context: NSManagedObjectContext) {
+        let request: NSFetchRequest<Photo> = Photo.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \Photo.creationDate, ascending: true)]
+        request.fetchBatchSize = 20
+
+        frc = NSFetchedResultsController(fetchRequest: request,
+                                         managedObjectContext: context,
+                                         sectionNameKeyPath: nil,
+                                         cacheName: nil)
+
+        super.init()
+        frc.delegate = self
+
+        do {
+            try frc.performFetch()
+        } catch {
+            print("Fetch failed: \(error)")
+        }
     }
 
-    func makeUIView(context: Context) -> UICollectionView {
+    var numberOfItems: Int {
+        frc.fetchedObjects?.count ?? 0
+    }
+
+    func photo(at index: Int) -> Photo? {
+        frc.fetchedObjects?[index]
+    }
+
+    func attach(collectionView: UICollectionView) {
+        self.collectionView = collectionView
+    }
+
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        DispatchQueue.main.async {
+            self.collectionView?.reloadData()
+        }
+    }
+
+    func addPhoto(_ uiImage: UIImage) {
+        let context = frc.managedObjectContext
+        let newPhoto = Photo(context: context)
+        newPhoto.id = UUID()
+        newPhoto.creationDate = Date()
+        newPhoto.imageData = uiImage.jpegData(compressionQuality: 0.8)
+        do {
+            try context.save()
+        } catch {
+            print("Save failed: \(error)")
+        }
+    }
+}
+
+class PhotoCollectionViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+    private var collectionView: UICollectionView!
+    var viewModel: PhotoFRCController!
+    var onSelectPhoto: ((Photo) -> Void)? // ← 追加
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+
         let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
         layout.itemSize = CGSize(width: 100, height: 100)
-        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        collectionView.dataSource = context.coordinator
-        collectionView.delegate = context.coordinator
+        layout.minimumInteritemSpacing = 10
+        layout.minimumLineSpacing = 10
+
+        collectionView = UICollectionView(frame: view.bounds, collectionViewLayout: layout)
+        collectionView.backgroundColor = .white
+        collectionView.dataSource = self
+        collectionView.delegate = self
         collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "Cell")
-        collectionView.backgroundColor = .clear
-        return collectionView
+        collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(collectionView)
+
+        viewModel.attach(collectionView: collectionView)
     }
 
-    func updateUIView(_ uiView: UICollectionView, context: Context) {
-        uiView.reloadData()
+    // MARK: - UICollectionViewDelegate
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if let photo = viewModel.photo(at: indexPath.item) {
+            onSelectPhoto?(photo) // SwiftUI に通知
+        }
     }
 
-    class Coordinator: NSObject, UICollectionViewDataSource, UICollectionViewDelegate {
-        var parent: CollectionViewRepresentable
+    // MARK: - DataSource
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        viewModel.numberOfItems
+    }
 
-        init(_ parent: CollectionViewRepresentable) {
-            self.parent = parent
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
+        cell.backgroundColor = .lightGray
+
+        if let photo = viewModel.photo(at: indexPath.item),
+           let data = photo.imageData,
+           let uiImage = UIImage(data: data) {
+            let imageView = UIImageView(image: uiImage)
+            imageView.contentMode = .scaleAspectFill
+            imageView.clipsToBounds = true
+            imageView.frame = cell.contentView.bounds
+            imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            cell.contentView.subviews.forEach { $0.removeFromSuperview() }
+            cell.contentView.addSubview(imageView)
         }
+        return cell
+    }
+}
 
-        func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-            parent.items.count
-        }
+struct PhotoCollectionViewRepresentable: UIViewControllerRepresentable {
+    @ObservedObject var viewModel: PhotoFRCController
+    var onSelectPhoto: ((Photo) -> Void)? // ← SwiftUI 側に渡す
 
-        func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell", for: indexPath)
-            cell.backgroundColor = parent.selectedItems.contains(parent.items[indexPath.item]) ? .green : .blue
+    func makeUIViewController(context: Context) -> PhotoCollectionViewController {
+        let vc = PhotoCollectionViewController()
+        vc.viewModel = viewModel
+        vc.onSelectPhoto = onSelectPhoto
+        return vc
+    }
 
-            let tag = 100
-            let label: UILabel
-            if let existingLabel = cell.viewWithTag(tag) as? UILabel {
-                label = existingLabel
-            } else {
-                label = UILabel(frame: cell.contentView.bounds)
-                label.tag = tag
-                label.textAlignment = .center
-                label.textColor = .white
-                cell.contentView.addSubview(label)
+    func updateUIViewController(_ uiViewController: PhotoCollectionViewController, context: Context) {}
+}
+
+struct ContentView: View {
+    @Environment(\.managedObjectContext) var context
+    @StateObject var viewModel: PhotoFRCController
+
+    init() {
+        let context = PersistenceController.shared.container.viewContext
+        _viewModel = StateObject(wrappedValue: PhotoFRCController(context: context))
+    }
+
+    @State private var selectedPhoto: Photo? = nil
+    @State private var showDetail = false
+
+    var body: some View {
+        NavigationView {
+            PhotoCollectionViewRepresentable(viewModel: viewModel) { photo in
+                selectedPhoto = photo
+                showDetail = true
             }
-            label.text = parent.items[indexPath.item]
-            return cell
-        }
-
-        func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-            let item = parent.items[indexPath.item]
-            if let index = parent.selectedItems.firstIndex(of: item) {
-                parent.selectedItems.remove(at: index)
-            } else {
-                parent.selectedItems.append(item)
+            .navigationTitle("Photos")
+            .sheet(isPresented: $showDetail) {
+                if let uiImage = selectedPhoto?.imageData.flatMap({ UIImage(data: $0) }) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                }
             }
-            collectionView.reloadItems(at: [indexPath])
         }
     }
 }
